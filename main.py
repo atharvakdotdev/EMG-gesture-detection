@@ -23,6 +23,7 @@ running = False
 timestampCSV=[]
 emg1=[]
 emg2=[]
+lable=[]
 # Global key mapping for each action (default keys)
 action_keys = {
     "action1": "space",
@@ -62,9 +63,7 @@ def process_emg_data():
             output = "0"
 
             # Store data
-            timestampCSV.append(current_time)
-            emg1.append(env1)
-            emg2.append(env2)
+            
 
             # ===============================
             # 🎯 Gesture Logic (CLEANED)
@@ -88,7 +87,10 @@ def process_emg_data():
                         last_trigger_time = current_time
                         keyboard.press_and_release(action_keys["action2"])
                     output = "2"
-
+            timestampCSV.append(current_time)
+            emg1.append(env1)
+            emg2.append(env2)
+            lable.append(output)
             # ===============================
             # 🖨️ Debug Print
             # ===============================
@@ -158,7 +160,7 @@ class API:
         with open("data.csv", mode="a", newline="") as file:
           writer = csv.writer(file)    
           for i in range(len(timestampCSV)):
-              writer.writerow([timestampCSV[i], emg1[i], emg2[i]])
+              writer.writerow([timestampCSV[i], emg1[i], emg2[i],2])
         return "EMG Stopped"
 
     def get_presets(self):
