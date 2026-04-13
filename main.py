@@ -140,7 +140,8 @@ class API:
         action_keys["action3"] = key3
         if not running:
             try:
-                ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+                ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=0.01)
+
             except Exception as e:
                 print("Error opening serial port:", e)
                 return "Error opening serial port"

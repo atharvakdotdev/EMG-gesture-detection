@@ -1,4 +1,0 @@
-pywebview
-pyserial
-numpy
-keyboard

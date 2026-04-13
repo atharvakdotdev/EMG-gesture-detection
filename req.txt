@@ -1,0 +1,7 @@
+pywebview
+pyserial
+numpy
+keyboard
+pandas
+scikit-learn
+joblib
