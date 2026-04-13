@@ -160,8 +160,7 @@ class API:
         with open("data.csv", mode="a", newline="") as file:
           writer = csv.writer(file)    
           for i in range(len(timestampCSV)):
-              writer.writerow([timestampCSV[i], emg1[i], emg2[i],0
-              ])
+              writer.writerow([timestampCSV[i], emg1[i], emg2[i],lable[i]])
         return "EMG Stopped"
 
     def get_presets(self):
