@@ -34,68 +34,69 @@ action_keys = {
 buffer1 = deque([0] * BUFFER_SIZE, maxlen=BUFFER_SIZE)
 buffer2 = deque([0] * BUFFER_SIZE, maxlen=BUFFER_SIZE)
 
-def get_envelope(data_buffer, new_value):
-    """Compute envelope using a moving average."""
-    data_buffer.append(new_value)
-    return np.mean(data_buffer) * 2
-
 def process_emg_data():
-    """Reads serial data, computes envelopes, triggers keypresses, and prints output."""
+    """Reads envelope data from serial, triggers keypresses, and logs output."""
     global last_trigger_time, running, ser, action_keys
 
     while running:
         current_time = time.time()
+
         try:
             line = ser.readline().decode('utf-8').strip() if ser else ""
         except Exception as e:
             print("Serial read error:", e)
             continue
 
-        if line:
-            try:
-                parts = line.split('\t')
-                if len(parts) != 2:
-                    print("Malformed data received")
-                    continue
-                # Open the CSV file in append mode
-                
-                raw1, raw2 = map(int, parts)
-                envelope1 = get_envelope(buffer1, abs(raw1))
-                envelope2 = get_envelope(buffer2, abs(raw2))
-                output = "0"
-                timestampCSV.append(time.time())
-                emg1.append(int(envelope1))
-                emg2.append(int(envelope2))
+        if not line:
+            continue
 
-                # Trigger key actions based on thresholds:
-                if raw1 > 20 and envelope2< 100:
+        try:
+            parts = line.split('\t')
+            if len(parts) != 2:
+                print("Malformed data received")
+                continue
+
+            # ✅ NOW these are already ENVELOPES
+            env1, env2 = map(int, parts)
+
+            output = "0"
+
+            # Store data
+            timestampCSV.append(current_time)
+            emg1.append(env1)
+            emg2.append(env2)
+
+            # ===============================
+            # 🎯 Gesture Logic (CLEANED)
+            # ===============================
+
+            if env1 > 20 and env2 < 100:
+                if current_time - last_trigger_time > COOLDOWN_TIME:
+                    last_trigger_time = current_time
+                    keyboard.press_and_release(action_keys["action1"])
+                output = "1"
+
+            elif env2 > 100:
+                if env1 > 10 and env2 > 200:
                     if current_time - last_trigger_time > COOLDOWN_TIME:
                         last_trigger_time = current_time
-                        keyboard.press_and_release(action_keys["action1"])
-                        output = "1"           
-                elif envelope2 > 100:
-                    if envelope1 > 10 and envelope2 > 200:
-                      if current_time - last_trigger_time > COOLDOWN_TIME:
-                          last_trigger_time = current_time
-                          keyboard.press_and_release(action_keys["action3"])
-                      output = "3"
-                    elif envelope2 > 150 and envelope1 <10:
-                      if current_time - last_trigger_time > COOLDOWN_TIME:
+                        keyboard.press_and_release(action_keys["action3"])
+                    output = "3"
+
+                elif env2 > 150 and env1 < 10:
+                    if current_time - last_trigger_time > COOLDOWN_TIME:
                         last_trigger_time = current_time
                         keyboard.press_and_release(action_keys["action2"])
-                      output = "2"
-                    
-                # elif envelope2 > 150:
-                #     if current_time - last_trigger_time > COOLDOWN_TIME:
-                #         last_trigger_time = current_time
-                #         keyboard.press_and_release(action_keys["action2"])
-                #     
-                
+                    output = "2"
 
-                timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                print(f"{timestamp} | Raw: {raw1}, {raw2} | Envelope: {envelope1:.2f}, {envelope2:.2f} | Output: {output}")
-            except ValueError:
-                print("Malformed data received")
+            # ===============================
+            # 🖨️ Debug Print
+            # ===============================
+            timestamp = time.strftime("%H:%M:%S", time.localtime())
+            print(f"{timestamp} | Env: {env1}, {env2} | Output: {output}")
+
+        except ValueError:
+            print("Malformed data received")
 
 # ===============================
 # JSON Database Functions for Presets
