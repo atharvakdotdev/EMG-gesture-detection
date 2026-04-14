@@ -1,94 +1,269 @@
 
 
----
+# EMG Gesture Control
 
-# **EMG Gesture Control System**
-
-This Python project allows users to map Electromyography (EMG) signals to keyboard actions. It reads real-time EMG data via serial communication, processes it, and triggers keyboard actions based on signal thresholds.
+A Python-based EMG gesture control system that reads real-time EMG signals from Arduino via serial, and triggers keyboard inputs using either rule-based logic or a machine learning model.
 
 ---
 
-## **Features**
-- Reads EMG signals from a serial port.
-- Smooths signal data using a moving average filter.
-- Triggers keyboard actions based on processed EMG signals.
-- Allows users to configure key mappings through a web interface.
-- Supports saving and loading custom key-mapping presets.
+## Demo / What it does
+
+`EMG Gesture Control` connects an EMG sensor setup to your PC. It reads live muscle signals, processes them, and translates gestures into keyboard events. The app supports:
+
+- fast non-ML gesture logic
+- ML-based prediction with baseline calibration
+- auto-switching between modes when a model is available
+- live debug output in the terminal
+- recording EMG data to CSV
+- configurable key mappings and presets via a web UI
 
 ---
 
-## **Dependencies**
-Make sure you have the following Python libraries installed:
+## Features
 
-```sh
-pip install pyserial numpy keyboard pywebview
+- Real-time EMG signal acquisition over serial
+- Dual mode operation:
+  - Non-ML threshold-based detection
+  - ML model prediction pipeline
+- Auto mode selects ML automatically if a model file is present
+- Configurable via .env
+- EMG data recording to `data/*.csv`
+- Preset key mapping support via JSON
+- Clean single-line live debug output
+- Simple pywebview UI for control and settings
+
+---
+
+## How it works
+
+### EMG input
+The system reads two EMG channels from the Arduino. Each sample is parsed from the serial stream and treated as raw EMG signal values.
+
+### Serial communication
+app.py opens the serial port configured by `SERIAL_PORT` and `BAUD_RATE`. Incoming lines are decoded, split into values, and passed into the gesture processing loop.
+
+### Non-ML logic
+In non-ML mode, the app applies rule-based thresholds to raw EMG values:
+
+- one gesture when `env1` is above a low threshold and `env2` stays under a value
+- other gestures when `env2` crosses higher thresholds
+- actions are mapped to keyboard keys with a cooldown to avoid repeat triggers
+
+This mode is fast and useful for basic EMG control without a trained model.
+
+### ML pipeline
+In ML mode, the pipeline is:
+
+1. collect a baseline from the first `BASELINE_SAMPLES`
+2. compute whether the current EMG signal deviates from baseline
+3. build a feature vector (`emg1`, `emg2`)
+4. run `model.predict(...)`
+5. map the predicted class to a keyboard action
+
+ML mode uses `joblib` to load the model and `pandas` for feature framing.
+
+---
+
+## Installation
+
+```bash
+python -m pip install -r req.txt
+```
+
+If you prefer a `requirements.txt`, create one from req.txt or install directly:
+
+```bash
+python -m pip install pyserial numpy pandas joblib python-dotenv pywebview keyboard
 ```
 
 ---
 
-## **How It Works**
-1. **EMG Data Processing:**
-   - The system reads two EMG signal values from the serial port.
-   - A moving average filter is applied to smooth the signal.
-   - If the signal crosses certain thresholds, a corresponding keyboard action is triggered.
+## Configuration
 
-2. **Keyboard Actions:**
-   - Three actions (`action1`, `action2`, and `action3`) are mapped to specific keys.
-   - Default mappings:
-     - `action1`: Space key (`"space"`)
-     - `action2`: Left arrow (`"left"`)
-     - `action3`: Right arrow (`"right"`)
+Create a .env file in the project root with the following values.
 
-3. **Web Interface:**
-   - Users can change key mappings using a dropdown menu.
-   - Custom configurations can be saved as presets.
-   - The interface is built with Bootstrap for a clean layout.
-
-
----
-
-## **Usage**
-### **1. Connect Your EMG Device**
-Ensure your EMG hardware is connected to the correct serial port. Update `SERIAL_PORT` in the script if necessary.
-
-```python
-SERIAL_PORT = "COM3"  # Change this to match your device
-BAUD_RATE = 115200
+```env
+SERIAL_PORT=COM3
+BAUD_RATE=115200
+FORCE_MODE=auto
+MODEL_PATH=models/emg_modelv0.2.pkl
+BUFFER_SIZE=64
+COOLDOWN_TIME=0.5
+WINDOW=1
+BASELINE_SAMPLES=300
+DEV1=5
+DEV2=40
+CSV_FILENAME=data.csv
+SAVE_INTERVAL=5
 ```
 
-### **2. Run the Program**
-```sh
-python readme.py
+### .env keys
+
+- `SERIAL_PORT`
+  - the Arduino serial port, e.g. `COM3`
+- `BAUD_RATE`
+  - communication speed, typically `115200`
+- `FORCE_MODE`
+  - `auto` → auto-selects ML if model exists
+  - `ml` → force ML mode
+  - `non-ml` → force rule-based mode
+- `MODEL_PATH`
+  - path to the saved ML model file
+- `BUFFER_SIZE`
+  - serial smoothing buffer length
+- `COOLDOWN_TIME`
+  - minimum seconds between triggered key presses
+- `WINDOW`
+  - ML window size for feature extraction
+- `BASELINE_SAMPLES`
+  - number of samples collected before ML predictions begin
+- `DEV1`
+  - baseline deviation threshold for channel 1
+- `DEV2`
+  - baseline deviation threshold for channel 2
+- `CSV_FILENAME`
+  - output CSV name when recording
+- `SAVE_INTERVAL`
+  - seconds between automatic CSV flushes
+
+> Note: non-ML gesture thresholds are currently defined in app.py and can be tuned there if needed.
+
+---
+
+## Usage
+
+### Run the app
+
+```bash
+python app.py
 ```
-This will start a local web-based interface.
 
-### **3. Configure Key Bindings**
-- Open the web interface.
-- Select the desired key mappings from the dropdown menu.
-- Click "Start EMG" to begin signal processing.
-- Click "Stop EMG" to halt processing.
+### Start EMG
+- Open the local UI served by `pywebview`
+- Choose your key mappings
+- Click `Start EMG`
 
-### **4. Save & Load Presets**
-- To save a preset, enter a name and click "Save Preset."
-- To load a saved preset, select it from the preset list.
+### Key mapping
+- Assign actions to physical keys through the UI
+- The default mapping is:
+  - `action1` → `space`
+  - `action2` → `left`
+  - `action3` → `right`
 
 ---
 
-## **Customization**
-Modify `process_emg_data()` to adjust signal processing logic:
+## Modes Explained
 
-```python
-if raw1 > 20 and envelope2 < 50:
-    keyboard.press_and_release(action_keys["action1"])  # Trigger "action1"
+### ML mode
+- Loads a trained model from `MODEL_PATH`
+- Uses baseline calibration
+- Applies prediction on a feature window
+- Best for gesture classification after training
+
+### Non-ML mode
+- Uses fixed threshold logic
+- Fast and lightweight
+- Good for prototyping or when a model is unavailable
+
+### Auto mode
+- Default mode
+- If `MODEL_PATH` exists and loads successfully, ML mode is selected
+- Otherwise, falls back to non-ML
+
+---
+
+## Training your own model
+
+### Collect data
+1. Enable recording in the UI
+2. Perform gestures while the system logs EMG values
+3. Save data to CSV
+
+### CSV format
+The app writes rows like:
+
+```csv
+timestamp,emg1,emg2,label
+...
 ```
-Change the thresholds as needed.
+
+- `timestamp`: epoch seconds
+- `emg1`, `emg2`: raw EMG channel values
+- `label`: gesture class or action ID
+
+### Basic training idea
+- collect labeled EMG samples
+- build a dataset with `emg1` and `emg2`
+- train a classifier to predict gesture labels
+- save the model with `joblib`
+- point `MODEL_PATH` to the saved `.pkl`
+
+This repo does not include a training script, but a simple sklearn workflow is sufficient:
+- `train_test_split`
+- `StandardScaler`
+- classifier like `RandomForestClassifier` or `LogisticRegression`
+- `joblib.dump(model, "models/emg_model.pkl")`
 
 ---
 
-## **Troubleshooting**
-- **No response from the serial port?** Ensure your device is connected and update the `SERIAL_PORT` value.
-- **Unexpected key presses?** Adjust the signal thresholds in `process_emg_data()`.
-- **Web interface not opening?** Make sure all dependencies are installed.
+## Debugging Guide
+
+### Serial issues
+- confirm Arduino is connected
+- verify `SERIAL_PORT` and `BAUD_RATE`
+- check device manager for the correct COM port
+
+### No input detected
+- ensure the EMG electrodes are attached correctly
+- verify the Arduino sketch is outputting two numeric values per line
+- check the terminal for malformed serial lines
+
+### Delay issues
+- reduce `COOLDOWN_TIME`
+- lower `WINDOW` if ML mode feels too slow
+- keep serial baud rate at `115200`
+
+### Model not loading
+- make sure `joblib` is installed
+- ensure `MODEL_PATH` points to a valid `.pkl`
+- inspect error output when the app starts
 
 ---
 
+## Performance Tips
+
+- use `BAUD_RATE=115200`
+- keep `BUFFER_SIZE` small for faster responsiveness
+- reduce `SAVE_INTERVAL` only if you need frequent CSV writes
+- use `non-ml` mode for the lowest latency
+- tune `DEV1` / `DEV2` and baseline sample counts for your hardware setup
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+- open issues for bugs or feature requests
+- submit PRs for new gesture modes, config options, or improved UI
+- keep changes small and focused
+- document .env updates and model requirements
+
+---
+
+## License
+
+Suggested license: MIT
+
+> A permissive license that allows reuse, modification, and sharing while protecting contributors.
+
+---
+
+## Future improvements
+
+- add a dedicated training script
+- support more EMG channels
+- add a more advanced UI for presets and live graphs
+- expose a calibration wizard
+- support custom non-ML thresholds in .env
+- add a model evaluation dashboard
