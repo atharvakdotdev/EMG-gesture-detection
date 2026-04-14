@@ -18,13 +18,13 @@ SERIAL_PORT = "COM3"
 BAUD_RATE = 115200
 # COOLDOWN_TIME = 1.5  # faster response
 
-MODEL_PATH = "emg_model.pkl"
+MODEL_PATH = "emg_modelv0.2.pkl"
 WINDOW = 1
 BASELINE_SAMPLES = 500
 DEVIATION_THRESHOLD_ENV1 = 5
 DEVIATION_THRESHOLD_ENV2 = 50  # tune 8–20
   # tune 8–20
-COOLDOWN_TIME = 0.3
+COOLDOWN_TIME = 1
 
 
 # ===============================

@@ -69,14 +69,14 @@ def process_emg_data():
             # 🎯 Gesture Logic (CLEANED)
             # ===============================
 
-            if env1 > 20 and env2 < 100:
+            if env1 > 10 and env2 < 100:
                 if current_time - last_trigger_time > COOLDOWN_TIME:
                     last_trigger_time = current_time
                     keyboard.press_and_release(action_keys["action1"])
                 output = "1"
 
             elif env2 > 100:
-                if env1 > 10 and env2 > 200:
+                if env1 > 10 and env2 > 100:
                     if current_time - last_trigger_time > COOLDOWN_TIME:
                         last_trigger_time = current_time
                         keyboard.press_and_release(action_keys["action3"])
