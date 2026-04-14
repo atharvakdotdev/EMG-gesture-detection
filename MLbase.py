@@ -16,10 +16,16 @@ import pandas as pd
 # ===============================
 SERIAL_PORT = "COM3"
 BAUD_RATE = 115200
-COOLDOWN_TIME = 0.5
+# COOLDOWN_TIME = 1.5  # faster response
 
 MODEL_PATH = "emg_model.pkl"
 WINDOW = 1
+BASELINE_SAMPLES = 500
+DEVIATION_THRESHOLD_ENV1 = 5
+DEVIATION_THRESHOLD_ENV2 = 50  # tune 8–20
+  # tune 8–20
+COOLDOWN_TIME = 0.3
+
 
 # ===============================
 # GLOBALS
@@ -33,11 +39,17 @@ emg1 = []
 emg2 = []
 labels = []
 
-# Load model (supports pipeline or plain model)
+# Load model
 model = joblib.load(MODEL_PATH)
 
 window_buffer = deque(maxlen=WINDOW)
 
+# Baseline system
+baseline_buffer = deque(maxlen=BASELINE_SAMPLES)
+baseline_mean = [0, 0]
+baseline_ready = False
+
+# Key mapping
 action_keys = {
     "1": "space",
     "2": "left",
@@ -45,34 +57,18 @@ action_keys = {
 }
 
 # ===============================
-# FEATURE EXTRACTION
+# FEATURE EXTRACTION (2 FEATURES)
 # ===============================
 def extract_features(window):
-    emg1_vals = [x[0] for x in window]
-    emg2_vals = [x[1] for x in window]
-
-    features = [
-        np.mean(emg1_vals),
-        np.mean(emg2_vals),
-        np.max(emg1_vals),
-        np.max(emg2_vals),
-        np.std(emg1_vals),
-        np.std(emg2_vals),
-        np.mean(emg1_vals) / (np.mean(emg2_vals) + 1e-6),
-        emg1_vals[-1] - emg1_vals[0],
-        emg2_vals[-1] - emg2_vals[0],
-    ]
-
-    return pd.DataFrame([features])  # ✅ FIX: avoids sklearn warning
+    env1, env2 = window[-1]
+    return pd.DataFrame([[env1, env2]], columns=['emg1', 'emg2'])
 
 # ===============================
-# SERIAL PARSER (FIXED)
+# SERIAL PARSER
 # ===============================
 def parse_serial(line):
     try:
-        line = line.strip()
-        line = line.replace(',', '\t')
-
+        line = line.strip().replace(',', '\t')
         parts = line.split('\t')
 
         if len(parts) < 2:
@@ -81,18 +77,41 @@ def parse_serial(line):
         env1 = int(parts[0].strip())
         env2 = int(parts[1].strip())
 
-        # sanity filter
         if env1 < 0 or env2 < 0:
             return None
 
         return env1, env2
 
     except:
-        print(f"Malformed data: {repr(line)}")
         return None
 
 # ===============================
-# EMG PROCESSING (ML ONLY)
+# BASELINE + DEVIATION
+# ===============================
+def is_deviation(env1, env2):
+    global baseline_mean, baseline_ready
+
+    # Collect baseline first
+    if not baseline_ready:
+        baseline_buffer.append((env1, env2))
+
+        if len(baseline_buffer) == BASELINE_SAMPLES:
+            b1 = np.mean([x[0] for x in baseline_buffer])
+            b2 = np.mean([x[1] for x in baseline_buffer])
+            baseline_mean = [b1, b2]
+            baseline_ready = True
+            print(f"✅ Baseline locked: {baseline_mean}")
+
+        return False
+
+    # Check deviation
+    d1 = abs(env1 - baseline_mean[0])
+    d2 = abs(env2 - baseline_mean[1])
+
+    return (d1 > DEVIATION_THRESHOLD_ENV1) or (d2 > DEVIATION_THRESHOLD_ENV2)
+
+# ===============================
+# EMG PROCESSING (ML + GATING)
 # ===============================
 def process_emg_data():
     global running, ser, last_trigger_time
@@ -114,26 +133,28 @@ def process_emg_data():
             continue
 
         env1, env2 = parsed
-
         window_buffer.append((env1, env2))
 
         prediction = "0"
 
-        if len(window_buffer) == WINDOW:
-            try:
-                features = extract_features(window_buffer)
+        # 🔥 ONLY PREDICT IF DEVIATION DETECTED
+        if is_deviation(env1, env2):
 
-                pred = model.predict(features)[0]
-                prediction = str(pred)
+            if len(window_buffer) == WINDOW:
+                try:
+                    features = extract_features(window_buffer)
 
-                # Trigger key
-                if prediction in action_keys:
-                    if current_time - last_trigger_time > COOLDOWN_TIME:
-                        last_trigger_time = current_time
-                        keyboard.press_and_release(action_keys[prediction])
+                    pred = model.predict(features)[0]
+                    prediction = str(pred)
 
-            except Exception as e:
-                print("Prediction error:", e)
+                    # Trigger key
+                    if prediction in action_keys:
+                        if current_time - last_trigger_time > COOLDOWN_TIME:
+                            last_trigger_time = current_time
+                            keyboard.press_and_release(action_keys[prediction])
+
+                except Exception as e:
+                    print("Prediction error:", e)
 
         # Save data
         timestampCSV.append(current_time)
@@ -146,7 +167,7 @@ def process_emg_data():
         print(f"{timestamp} | Env: {env1}, {env2} | ML: {prediction}")
 
 # ===============================
-# PRESETS
+# PRESETS (UNCHANGED)
 # ===============================
 PRESETS_FILE = "presets.json"
 
@@ -190,7 +211,7 @@ class API:
             self.emg_thread = threading.Thread(target=process_emg_data, daemon=True)
             self.emg_thread.start()
 
-            return "ML EMG Started 🚀"
+            return "ML EMG Started 🚀 (Calibrating baseline...)"
 
         return "Already running"
 
@@ -214,9 +235,10 @@ class API:
 # UI
 # ===============================
 html_content = """<html><body style='background:black;color:white'>
-<h2>ML EMG Controller Running</h2>
+<h2>ML EMG Controller (Low Latency)</h2>
 <button onclick="start()">Start</button>
 <button onclick="stop()">Stop</button>
+<p>Wait 1–2 sec for baseline calibration</p>
 <script>
 function start(){window.pywebview.api.start_emg("space","left","right")}
 function stop(){window.pywebview.api.stop_emg()}
