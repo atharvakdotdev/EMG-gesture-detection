@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EMG Gesture Control</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    #sidebar { height: 420px; overflow-y: auto; }
+  </style>
+</head>
+<body class="bg-dark text-white">
+<div class="d-flex justify-content-center my-3">
+  <div class="d-flex justify-content-center align-items-center my-3 gap-3">
+  <input type="text" id="csvName" placeholder="file name (e.g. session1.csv)" class="form-control w-25">
+
+  <div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" id="recordCheckbox" onchange="toggleRecordingCheckbox()">
+    <label class="form-check-label" for="recordCheckbox">Recording</label>
+  </div>
+</div>
+
+</div>
+
+  <div class="container-fluid p-3">
+    <div class="row">
+      <!-- Sidebar -->
+      
+      <!-- Main Content -->
+      <div class="col-md-9">
+        <div class="d-flex justify-content-around my-3">
+          <div class="text-center">
+            <label class="fw-bold">Action-one</label>
+            <select class="form-select" id="action1Dropdown">
+              <option value="esc">Esc</option>
+              <option value="f1">F1</option>
+              <option value="f2">F2</option>
+              <option value="f3">F3</option>
+              <option value="f4">F4</option>
+              <option value="f5">F5</option>
+              <option value="f6">F6</option>
+              <option value="f7">F7</option>
+              <option value="f8">F8</option>
+              <option value="f9">F9</option>
+              <option value="f10">F10</option>
+              <option value="f11">F11</option>
+              <option value="f12">F12</option>
+              <option value="print screen">Print Screen</option>
+              <option value="scroll lock">Scroll Lock</option>
+              <option value="pause">Pause</option>
+              <option value="insert">Insert</option>
+              <option value="delete">Delete</option>
+              <option value="home">Home</option>
+              <option value="end">End</option>
+              <option value="page up">Page Up</option>
+              <option value="page down">Page Down</option>
+              <option value="up">Up Arrow</option>
+              <option value="down">Down Arrow</option>
+              <option value="left">Left Arrow</option>
+              <option value="right">Right Arrow</option>
+              <option value="space" selected>Space</option>
+              <option value="enter">Enter</option>
+              <option value="tab">Tab</option>
+              <option value="backspace">Backspace</option>
+              <option value="caps lock">Caps Lock</option>
+              <option value="shift">Shift</option>
+              <option value="ctrl">Ctrl</option>
+              <option value="alt">Alt</option>
+              <option value="alt gr">Alt Gr</option>
+              <option value="menu">Menu</option>
+              <option value="num lock">Num Lock</option>
+              <option value="numpad /">Numpad /</option>
+              <option value="numpad *">Numpad *</option>
+              <option value="numpad -">Numpad -</option>
+              <option value="numpad +">Numpad +</option>
+              <option value="numpad enter">Numpad Enter</option>
+              <option value="numpad 0">Numpad 0</option>
+              <option value="numpad 1">Numpad 1</option>
+              <option value="numpad 2">Numpad 2</option>
+              <option value="numpad 3">Numpad 3</option>
+              <option value="numpad 4">Numpad 4</option>
+              <option value="numpad 5">Numpad 5</option>
+              <option value="numpad 6">Numpad 6</option>
+              <option value="numpad 7">Numpad 7</option>
+              <option value="numpad 8">Numpad 8</option>
+              <option value="numpad 9">Numpad 9</option>
+            </select>
+          </div>
+          <div class="text-center">
+            <label class="fw-bold">Action-two</label>
+            <select class="form-select" id="action2Dropdown">
+              <option value="esc">Esc</option>
+              <option value="f1">F1</option>
+              <option value="f2">F2</option>
+              <option value="f3">F3</option>
+              <option value="f4">F4</option>
+              <option value="f5">F5</option>
+              <option value="f6">F6</option>
+              <option value="f7">F7</option>
+              <option value="f8">F8</option>
+              <option value="f9">F9</option>
+              <option value="f10">F10</option>
+              <option value="f11">F11</option>
+              <option value="f12">F12</option>
+              <option value="print screen">Print Screen</option>
+              <option value="scroll lock">Scroll Lock</option>
+              <option value="pause">Pause</option>
+              <option value="insert">Insert</option>
+              <option value="delete">Delete</option>
+              <option value="home">Home</option>
+              <option value="end">End</option>
+              <option value="page up">Page Up</option>
+              <option value="page down">Page Down</option>
+              <option value="up">Up Arrow</option>
+              <option value="down">Down Arrow</option>
+              <option value="left" selected>Left Arrow</option>
+              <option value="right">Right Arrow</option>
+              <option value="space">Space</option>
+              <option value="enter">Enter</option>
+              <option value="tab">Tab</option>
+              <option value="backspace">Backspace</option>
+              <option value="caps lock">Caps Lock</option>
+              <option value="shift">Shift</option>
+              <option value="ctrl">Ctrl</option>
+              <option value="alt">Alt</option>
+              <option value="alt gr">Alt Gr</option>
+              <option value="menu">Menu</option>
+              <option value="num lock">Num Lock</option>
+              <option value="numpad /">Numpad /</option>
+              <option value="numpad *">Numpad *</option>
+              <option value="numpad -">Numpad -</option>
+              <option value="numpad +">Numpad +</option>
+              <option value="numpad enter">Numpad Enter</option>
+              <option value="numpad 0">Numpad 0</option>
+              <option value="numpad 1">Numpad 1</option>
+              <option value="numpad 2">Numpad 2</option>
+              <option value="numpad 3">Numpad 3</option>
+              <option value="numpad 4">Numpad 4</option>
+              <option value="numpad 5">Numpad 5</option>
+              <option value="numpad 6">Numpad 6</option>
+              <option value="numpad 7">Numpad 7</option>
+              <option value="numpad 8">Numpad 8</option>
+              <option value="numpad 9">Numpad 9</option>
+            </select>
+          </div>
+          <div class="text-center">
+            <label class="fw-bold">Action-three</label>
+            <select class="form-select" id="action3Dropdown">
+              <option value="esc">Esc</option>
+              <option value="f1">F1</option>
+              <option value="f2">F2</option>
+              <option value="f3">F3</option>
+              <option value="f4">F4</option>
+              <option value="f5">F5</option>
+              <option value="f6">F6</option>
+              <option value="f7">F7</option>
+              <option value="f8">F8</option>
+              <option value="f9">F9</option>
+              <option value="f10">F10</option>
+              <option value="f11">F11</option>
+              <option value="f12">F12</option>
+              <option value="print screen">Print Screen</option>
+              <option value="scroll lock">Scroll Lock</option>
+              <option value="pause">Pause</option>
+              <option value="insert">Insert</option>
+              <option value="delete">Delete</option>
+              <option value="home">Home</option>
+              <option value="end">End</option>
+              <option value="page up">Page Up</option>
+              <option value="page down">Page Down</option>
+              <option value="up">Up Arrow</option>
+              <option value="down">Down Arrow</option>
+              <option value="left">Left Arrow</option>
+              <option value="right" selected>Right Arrow</option>
+              <option value="space">Space</option>
+              <option value="enter">Enter</option>
+              <option value="tab">Tab</option>
+              <option value="backspace">Backspace</option>
+              <option value="caps lock">Caps Lock</option>
+              <option value="shift">Shift</option>
+              <option value="ctrl">Ctrl</option>
+              <option value="alt">Alt</option>
+              <option value="alt gr">Alt Gr</option>
+              <option value="menu">Menu</option>
+              <option value="num lock">Num Lock</option>
+              <option value="numpad /">Numpad /</option>
+              <option value="numpad *">Numpad *</option>
+              <option value="numpad -">Numpad -</option>
+              <option value="numpad +">Numpad +</option>
+              <option value="numpad enter">Numpad Enter</option>
+              <option value="numpad 0">Numpad 0</option>
+              <option value="numpad 1">Numpad 1</option>
+              <option value="numpad 2">Numpad 2</option>
+              <option value="numpad 3">Numpad 3</option>
+              <option value="numpad 4">Numpad 4</option>
+              <option value="numpad 5">Numpad 5</option>
+              <option value="numpad 6">Numpad 6</option>
+              <option value="numpad 7">Numpad 7</option>
+              <option value="numpad 8">Numpad 8</option>
+              <option value="numpad 9">Numpad 9</option>
+            </select>
+          </div>
+        </div>
+        <!-- EMG Control Buttons -->
+        <div class="d-flex justify-content-center my-3">
+          <button onclick="startEMG()" class="btn btn-success mx-2">Start EMG</button>
+          <button onclick="stopEMG()" class="btn btn-danger mx-2">Stop EMG</button>
+        </div>
+        <!-- Output Label -->
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS and Custom Script -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Start and Stop EMG functions
+    function startEMG() {
+      var key1 = document.getElementById('action1Dropdown').value;
+      var key2 = document.getElementById('action2Dropdown').value;
+      var key3 = document.getElementById('action3Dropdown').value;
+      window.pywebview.api.start_emg(key1, key2, key3).then(response => {
+        console.log(response);
+      });
+    }
+    function toggleRecordingCheckbox() {
+  const checkbox = document.getElementById('recordCheckbox');
+  const name = document.getElementById('csvName').value || "data.csv";
+
+  const isRecording = checkbox.checked;
+
+  window.pywebview.api.toggle_recording(isRecording, name).then(res => {
+    console.log(res);
+  });
+}
+
+    function stopEMG() {
+      window.pywebview.api.stop_emg().then(response => {
+        console.log(response);
+      });
+    }
+
+    // Load presets into the sidebar list
+    function loadPresets() {
+      window.pywebview.api.get_presets().then(presets => {
+        const presetList = document.getElementById('presetList');
+        presetList.innerHTML = "";
+        presets.forEach(preset => {
+          let a = document.createElement('a');
+          a.href = "#";
+          a.className = "list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between mb-2";
+          a.innerHTML = preset.name +
+            '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16"><path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393"/></svg>';
+          // Clicking a preset will update the dropdowns with the saved key values.
+          a.addEventListener('click', () => {
+            document.getElementById('action1Dropdown').value = preset.action1;
+            document.getElementById('action2Dropdown').value = preset.action2;
+            document.getElementById('action3Dropdown').value = preset.action3;
+          });
+          presetList.appendChild(a);
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      loadPresets();
+      // Save preset using the inline input field and Save button
+      document.getElementById('savePresetBtn').addEventListener('click', function() {
+        var presetName = document.getElementById('presetNameInput').value;
+        if (!presetName) {
+          alert("Please enter a preset name.");
+          return;
+        }
+        var action1 = document.getElementById('action1Dropdown').value;
+        var action2 = document.getElementById('action2Dropdown').value;
+        var action3 = document.getElementById('action3Dropdown').value;
+        window.pywebview.api.save_preset(presetName, action1, action2, action3).then(response => {
+          console.log(response);
+          document.getElementById('presetNameInput').value = "";
+          loadPresets();
+        });
+      });
+      // Optional: clicking the plus button clears the preset name input for new entry.
+      document.getElementById('addPresetBtn').addEventListener('click', function() {
+        document.getElementById('presetNameInput').value = "";
+      });
+    });
+  </script>
+</body>
+</html>
