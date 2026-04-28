@@ -11,7 +11,8 @@ import csv
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv(dotenv_path=".config")
+
 
 # Optional ML imports
 try:
