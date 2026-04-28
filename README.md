@@ -37,16 +37,17 @@ A Python-based EMG gesture control system that reads real-time EMG signals from 
 ## How it works
 
 ### EMG input
-The system reads two EMG channels from the Arduino. Each sample is parsed from the serial stream and treated as raw EMG signal values.
+The system reads two EMG channels from the Arduino. Each sample is parsed from the serial stream and treated as enveloped EMG signal values.
 
 ### Serial communication
 app.py opens the serial port configured by `SERIAL_PORT` and `BAUD_RATE`. Incoming lines are decoded, split into values, and passed into the gesture processing loop.
 
 ### Non-ML logic
-In non-ML mode, the app applies rule-based thresholds to raw EMG values:
+In non-ML mode, the app applies rule-based thresholds to Envelop EMG values:
 
 - one gesture when `env1` is above a low threshold and `env2` stays under a value
-- other gestures when `env2` crosses higher thresholds
+- second gestures when `env2` crosses higher thresholds
+- third geust
 - actions are mapped to keyboard keys with a cooldown to avoid repeat triggers
 
 This mode is fast and useful for basic EMG control without a trained model.
