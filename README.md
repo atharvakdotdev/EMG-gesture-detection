@@ -17,7 +17,8 @@ Their work on EMG sensing, BioAmp hardware, and human-computer interaction proje
 
 ## Demo / What it does
 
-`EMG Gesture Control` connects an EMG sensor setup to your PC. It reads live muscle signals, processes them, and translates gestures into keyboard events. The app supports:
+`EMG Gesture Control` connects an EMG sensor setup to your PC. It reads live muscle signals, processes them, and translates 3 specfic gestures into keyboard events. The app supports:
+![gestures](/static/gestures.jpeg)
 
 - fast non-ML gesture logic
 - ML-based prediction with baseline calibration
@@ -92,7 +93,7 @@ python -m pip install pyserial numpy pandas joblib python-dotenv pywebview keybo
 
 ## Configuration
 
-Create a .config file in the project root with the following values.
+COnfigure a .config file in the project root with the following values.
 
 ```env
 SERIAL_PORT=COM3
@@ -109,7 +110,7 @@ CSV_FILENAME=data.csv
 SAVE_INTERVAL=5
 ```
 
-### .env keys
+### .config keys
 
 - `SERIAL_PORT`
   - the Arduino serial port, e.g. `COM3`
@@ -186,35 +187,94 @@ python app.py
 
 ## Training your own model
 
-### Collect data
-1. Enable recording in the UI
-2. Perform gestures while the system logs EMG values
-3. Save data to CSV
+This project includes a ready-made training script (`Logistic_Regression_model.py`) that handles the entire pipeline.
 
-### CSV format
-The app writes rows like:
+### Step 1: Collect training data
+
+1. Run the main app: `python app.py`
+2. In the web UI, enable **Recording** (check the recording checkbox)
+3. Perform each gesture multiple times while keeping the recording active
+4. The app will save EMG data to `data/data.csv` with this format:
 
 ```csv
 timestamp,emg1,emg2,label
+1735689600.1,245,123,action1
+1735689600.2,250,121,action1
+1735689600.3,248,125,action2
 ...
 ```
 
-- `timestamp`: epoch seconds
-- `emg1`, `emg2`: raw EMG channel values
-- `label`: gesture class or action ID
+5. Stop the app after collecting samples for all desired gestures
 
-### Basic training idea
-- collect labeled EMG samples
-- build a dataset with `emg1` and `emg2`
-- train a classifier to predict gesture labels
-- save the model with `joblib`
-- point `MODEL_PATH` to the saved `.pkl`
+### Step 2: Label your data
 
-This repo does not include a training script, but a simple sklearn workflow is sufficient:
-- `train_test_split`
-- `StandardScaler`
-- classifier like `RandomForestClassifier` or `LogisticRegression`
-- `joblib.dump(model, "models/emg_model.pkl")`
+Open `data/data.csv` and manually set the `label` column for each row:
+
+| Label | Gesture |
+|-------|---------|
+| `action1` | First gesture (e.g., fist) |
+| `action2` | Second gesture (e.g., open hand) |
+| `action3` | Third gesture (e.g., relax) |
+
+> **Tip:** You can also add more labels like `action4`, `action5` etc. for additional gestures.
+
+### Step 3: Train the model
+
+Run the training script:
+
+```bash
+python Logistic_Regression_model.py
+```
+
+This will:
+- Load data from `data/data.csv`
+- Extract `emg1` and `emg2` as features
+- Split data into 80% training / 20% testing
+- Train a Logistic Regression classifier with StandardScaler
+- Print accuracy score
+- If `models/emg_model.pkl` already exists, prompt you for a new filename
+- Save the model to the specified path (default: `models/emg_modelv0.3.pkl`)
+
+### Step 4: Use the model
+
+1. Open `.config` and set:
+   ```env
+   FORCE_MODE=auto
+   MODEL_PATH=models/emg_modelv0.3.pkl
+   ```
+2. Restart `python app.py`
+3. The app will automatically load the model and switch to ML mode
+
+---
+
+### CSV format reference
+
+| Column | Description |
+|--------|-------------|
+| `timestamp` | Epoch seconds when sample was recorded |
+| `emg1` | Raw EMG value from channel 1 |
+| `emg2` | Raw EMG value from channel 2 |
+| `label` | Gesture class (`action1`, `action2`, `action3`, etc.) |
+
+### Customizing the training script
+
+If you want to use a different classifier, edit `Logistic_Regression_model.py`:
+
+```python
+# Replace LogisticRegression with your choice:
+from sklearn.ensemble import RandomForestClassifier
+
+model = make_pipeline(
+    StandardScaler(),
+    RandomForestClassifier(n_estimators=100)
+)
+```
+
+To change the output model path, modify the last line:
+
+```python
+joblib.dump(model, "models/your_model_name.pkl")
+```
 
 ---
 
@@ -278,4 +338,6 @@ Suggested license: MIT
 - add a more advanced UI for presets and live graphs
 - expose a calibration wizard
 - support custom non-ML thresholds in .env
-- add a model evaluation dashboard
+- add a model evaluation dashboar
+
+#### For any help/issues contact me at https://www.instagram.com/atharvak.dev/ 

@@ -4,6 +4,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 import joblib
+from pathlib import Path
+
 
 # Load dataset
 df = pd.read_csv("data\data.csv")
@@ -28,7 +30,11 @@ model.fit(X_train, y_train)
 
 print("Accuracy:", model.score(X_test, y_test))
 
-# 🔥 IMPORTANT: overwrite old model
-joblib.dump(model, "models/emg_modelv0.3.pkl") 
+
+filepath="models/emg_modelv0.3.pkl"
+if Path("models/emg_model.pkl").exists():
+    filepath=input("models/emg_model.pkl already exist, please enter different name:")
+
+joblib.dump(model, filepath) 
 
 print("✅ NEW 2-FEATURE MODEL SAVED")
