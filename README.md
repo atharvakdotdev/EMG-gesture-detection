@@ -5,6 +5,15 @@
 A Python-based EMG gesture control system that reads real-time EMG signals from Arduino via serial, and triggers keyboard inputs using either rule-based logic or a machine learning model.
 
 ---
+## Credits / Inspiration
+
+This project is heavily inspired by the work of Upsidedownlabs and their open-source neuroscience and EMG projects. Their hardware ecosystem and educational content played a major role in the development of this project.
+
+Similar project video by Upside Down Labs:  
+[Watch on YouTube](https://www.youtube.com/watch?v=zJ_Ei5tvHiQ)
+
+Their work on EMG sensing, BioAmp hardware, and human-computer interaction projects is highly recommended for anyone interested in biosignal processing and gesture recognition.
+
 
 ## Demo / What it does
 
@@ -64,6 +73,8 @@ In ML mode, the pipeline is:
 ML mode uses `joblib` to load the model and `pandas` for feature framing.
 
 ---
+## Hardware setup [Setup Tutorial](HARDWARE.md)
+
 
 ## Installation
 
@@ -81,7 +92,7 @@ python -m pip install pyserial numpy pandas joblib python-dotenv pywebview keybo
 
 ## Configuration
 
-Create a .env file in the project root with the following values.
+Create a .config file in the project root with the following values.
 
 ```env
 SERIAL_PORT=COM3
